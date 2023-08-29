@@ -53,8 +53,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	BOOL dpi_success = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	assert(dpi_success);
 
-	google::InitGoogleLogging("Editor");
-
 	wi::arguments::Parse(lpCmdLine); // if you wish to use command line arguments, here is a good place to parse them...
 
     // Initialize global strings
