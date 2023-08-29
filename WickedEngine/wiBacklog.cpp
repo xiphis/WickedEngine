@@ -12,6 +12,9 @@
 #include "wiHelper.h"
 #include "wiGUI.h"
 
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#include <glog/logging.h>
+
 #include <mutex>
 #include <deque>
 #include <limits>
@@ -58,15 +61,30 @@ namespace wi::backlog
 	}
 	void write_logfile()
 	{
-		std::string filename = wi::helper::GetTempDirectoryPath() + "wiBacklog.txt";
-		std::string text = getText(); // will lock mutex
-		wi::helper::FileWrite(filename, (const uint8_t*)text.c_str(), text.length());
+		google::FlushLogFiles(google::GLOG_WARNING);
+		//std::string filename = wi::helper::GetTempDirectoryPath() + "wiBacklog.txt";
+		//std::string text = getText(); // will lock mutex
+		//wi::helper::FileWrite(filename, (const uint8_t*)text.c_str(), text.length());
 	}
+
+	class BacklogSink : public google::LogSink
+	{
+	public:
+		void send(google::LogSeverity severity, const char* full_filename,
+			const char* base_filename, int line,
+			const google::LogMessageTime& logmsgtime, const char* message,
+			size_t message_len);
+	};
 
 	// The logwriter object will automatically write out the backlog to the temp folder when it's destroyed
 	//	Should happen on application exit
 	struct LogWriter
 	{
+		BacklogSink sink;
+		LogWriter()
+		{
+			google::AddLogSink(&sink);
+		}
 		~LogWriter()
 		{
 			write_logfile();
@@ -120,7 +138,7 @@ namespace wi::backlog
 					inputField.SetCancelInputEnabled(false);
 					inputField.OnInputAccepted([](wi::gui::EventArgs args) {
 						historyPos = 0;
-						post(args.sValue);
+						post_backlog(args.sValue);
 						LogEntry entry;
 						entry.text = args.sValue;
 						entry.level = LogLevel::Default;
@@ -135,7 +153,7 @@ namespace wi::backlog
 						}
 						else
 						{
-							post("Lua execution is disabled", LogLevel::Error);
+							post_backlog("Lua execution is disabled", LogLevel::Error);
 						}
 						inputField.SetText("");
 					});
@@ -319,7 +337,7 @@ namespace wi::backlog
 				params.color = font_params.color;
 				break;
 			}
-			params.cursor = wi::font::Draw(x.text, params, cmd);
+			params.cursor = wi::font::Draw(x.text + "\n", params, cmd);
 		}
 	}
 
@@ -334,35 +352,34 @@ namespace wi::backlog
 		entries.clear();
 		scroll = 0;
 	}
-	void post(const std::string& input, LogLevel level)
+	void BacklogSink::send(google::LogSeverity severity, const char* full_filename,
+		const char* base_filename, int line,
+		const google::LogMessageTime& logmsgtime, const char* message,
+		size_t message_len)
 	{
-		if (logLevel > level)
-		{
-			return;
-		}
-
 		// This is explicitly scoped for scoped_lock!
 		{
 			std::scoped_lock lock(logLock);
 
-			std::string str;
-			switch (level)
+			LogLevel level;
+			switch (severity)
 			{
 			default:
-			case LogLevel::Default:
-				str = "";
+			case google::GLOG_INFO:
+				level = LogLevel::Default;
 				break;
-			case LogLevel::Warning:
-				str = "[Warning] ";
+			case google::GLOG_WARNING:
+				level = LogLevel::Warning;
 				break;
-			case LogLevel::Error:
-				str = "[Error] ";
+			case google::GLOG_ERROR:
+				level = LogLevel::Error;
+				break;
+			case google::GLOG_FATAL:
+				level = LogLevel::Fatal;
 				break;
 			}
-			str += input;
-			str += '\n';
 			LogEntry entry;
-			entry.text = str;
+			entry.text = ToString(severity, full_filename, line, logmsgtime, message, message_len);
 			entry.level = level;
 			entries.push_back(entry);
 			if (entries.size() > deletefromline)
@@ -370,28 +387,34 @@ namespace wi::backlog
 				entries.pop_front();
 			}
 			refitscroll = true;
-
-			switch (level)
-			{
-			default:
-			case LogLevel::Default:
-				wi::helper::DebugOut(str, wi::helper::DebugLevel::Normal);
-				break;
-			case LogLevel::Warning:
-				wi::helper::DebugOut(str, wi::helper::DebugLevel::Warning);
-				break;
-			case LogLevel::Error:
-				wi::helper::DebugOut(str, wi::helper::DebugLevel::Error);
-				break;
-			}
-
 			// lock released on block end
 		}
 
-		if (level >= LogLevel::Error)
+	}
+
+	inline google::LogSeverity ToSeverity(LogLevel level) {
+
+		switch (level)
 		{
-			write_logfile(); // will lock mutex
+		default:
+		case LogLevel::Default:
+			return google::GLOG_INFO;
+		case LogLevel::Warning:
+			return google::GLOG_WARNING;
+		case LogLevel::Error:
+			return google::GLOG_ERROR;
+		case LogLevel::Fatal:
+			return google::GLOG_FATAL;
 		}
+	}
+
+	void post(const char* file, int line, const std::string& input, LogLevel level)
+	{
+		if (input.empty())
+		{
+			return;
+		}
+		google::LogMessage(file, line, ToSeverity(level)).stream() << input;
 	}
 
 	void historyPrev()

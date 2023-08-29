@@ -15,6 +15,7 @@ namespace wi::backlog
 		Default,
 		Warning,
 		Error,
+		Fatal,
 	};
 
 	void Toggle();
@@ -33,7 +34,10 @@ namespace wi::backlog
 
 	std::string getText();
 	void clear();
-	void post(const std::string& input, LogLevel level = LogLevel::Default);
+
+#define post_backlog(...) post(__FILE__, __LINE__, __VA_ARGS__)
+
+	void post(const char* file, int line, const std::string& input, LogLevel level = LogLevel::Default);
 
 	void historyPrev();
 	void historyNext();

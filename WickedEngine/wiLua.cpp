@@ -121,7 +121,7 @@ namespace wi::lua
 					std::string ss;
 					ss += WILUA_ERROR_PREFIX;
 					ss += str;
-					wi::backlog::post(ss, wi::backlog::LogLevel::Error);
+					wi::backlog::post_backlog(ss, wi::backlog::LogLevel::Error);
 					lua_pop(L, 1); // remove error message
 				}
 			}
@@ -165,7 +165,7 @@ namespace wi::lua
 		primitive::Bind();
 		Physics_BindLua::Bind();
 
-		wi::backlog::post("wi::lua Initialized (" + std::to_string((int)std::round(timer.elapsed())) + " ms)");
+		wi::backlog::post_backlog("wi::lua Initialized (" + std::to_string((int)std::round(timer.elapsed())) + " ms)");
 	}
 
 	lua_State* GetLuaState()
@@ -181,7 +181,7 @@ namespace wi::lua
 		std::string ss;
 		ss += WILUA_ERROR_PREFIX;
 		ss += str;
-		wi::backlog::post(ss, wi::backlog::LogLevel::Error);
+		wi::backlog::post_backlog(ss, wi::backlog::LogLevel::Error);
 		lua_pop(lua_internal().m_luaState, 1); // remove error message
 	}
 	bool RunScript()
@@ -481,7 +481,7 @@ namespace wi::lua
 		{
 			ss += error;
 		}
-		wi::backlog::post(ss, wi::backlog::LogLevel::Error);
+		wi::backlog::post_backlog(ss, wi::backlog::LogLevel::Error);
 	}
 
 	bool CompileFile(const char* filename, wi::vector<uint8_t>& dst)

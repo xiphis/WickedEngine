@@ -5,6 +5,9 @@
 #include <thread>
 #include <shellapi.h> // drag n drop
 
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#include <glog/logging.h>
+
 // Enable macro and follow instructions from here: https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/
 //#define USING_D3D12_AGILITY_SDK
 #ifdef USING_D3D12_AGILITY_SDK
@@ -49,6 +52,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	BOOL dpi_success = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	assert(dpi_success);
+
+	google::InitGoogleLogging("Editor");
 
 	wi::arguments::Parse(lpCmdLine); // if you wish to use command line arguments, here is a good place to parse them...
 
@@ -131,7 +136,7 @@ BOOL CreateEditorWindow(int nCmdShow)
 		borderless = editor.config.GetBool("borderless");
 		editor.allow_hdr = editor.config.GetBool("allow_hdr");
 
-		wi::backlog::post("config.ini loaded in " + std::to_string(timer.elapsed_milliseconds()) + " milliseconds\n");
+		wi::backlog::post_backlog("config.ini loaded in " + std::to_string(timer.elapsed_milliseconds()) + " milliseconds\n");
 	}
 
 	HWND hWnd = NULL;
@@ -298,17 +303,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (wi::shadercompiler::GetRegisteredShaderCount() > 0)
 		{
 			std::thread([] {
-				wi::backlog::post("[Shader check] Started checking " + std::to_string(wi::shadercompiler::GetRegisteredShaderCount()) + " registered shaders for changes...");
+				wi::backlog::post_backlog("[Shader check] Started checking " + std::to_string(wi::shadercompiler::GetRegisteredShaderCount()) + " registered shaders for changes...");
 				if (wi::shadercompiler::CheckRegisteredShadersOutdated())
 				{
-					wi::backlog::post("[Shader check] Changes detected, initiating reload...");
+					wi::backlog::post_backlog("[Shader check] Changes detected, initiating reload...");
 					wi::eventhandler::Subscribe_Once(wi::eventhandler::EVENT_THREAD_SAFE_POINT, [](uint64_t userdata) {
 						wi::renderer::ReloadShaders();
 						});
 				}
 				else
 				{
-					wi::backlog::post("[Shader check] All up to date");
+					wi::backlog::post_backlog("[Shader check] All up to date");
 				}
 				}).detach();
 		}

@@ -3514,7 +3514,7 @@ namespace wi::scene
 			total_size += ComputeTextureMemorySizeInBytes(impostorRenderTarget_Surface_MSAA.desc);
 			total_size += ComputeTextureMemorySizeInBytes(impostorRenderTarget_Normal_MSAA.desc);
 			info += "\n\tMemory = " + wi::helper::GetMemorySizeText(total_size) + "\n";
-			wi::backlog::post(info);
+			wi::backlog::post_backlog(info);
 		}
 
 		// reconstruct impostor array status:
@@ -4066,7 +4066,7 @@ namespace wi::scene
 			total_size += ComputeTextureMemorySizeInBytes(envrenderingColorBuffer_MSAA.desc);
 			total_size += ComputeTextureMemorySizeInBytes(envmapArray.desc);
 			info += "\n\tMemory = " + wi::helper::GetMemorySizeText(total_size) + "\n";
-			wi::backlog::post(info);
+			wi::backlog::post_backlog(info);
 		}
 
 		// reconstruct envmap array status:
