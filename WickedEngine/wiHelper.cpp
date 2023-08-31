@@ -10,7 +10,9 @@
 #include "Utility/basis_universal/encoder/lodepng.h"
 extern basist::etc1_global_selector_codebook g_basis_global_codebook;
 
+#ifndef GLOG_NO_ABBREVIATED_SEVERITIES
 #define GLOG_NO_ABBREVIATED_SEVERITIES
+#endif
 #include <glog/logging.h>
 
 #include <thread>

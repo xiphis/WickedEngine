@@ -12,7 +12,9 @@
 #include "wiHelper.h"
 #include "wiGUI.h"
 
+#ifndef GLOG_NO_ABBREVIATED_SEVERITIES
 #define GLOG_NO_ABBREVIATED_SEVERITIES
+#endif
 #include <glog/logging.h>
 
 #include <mutex>
