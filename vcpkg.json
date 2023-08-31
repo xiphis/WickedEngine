@@ -1,9 +1,10 @@
 {
-  "name": "wickedengine",
-  "version-string": "xiphis",
-  "dependencies": [
-    "glog",
-    "gflags"
-  ],
-  "builtin-baseline": "8568364fbeb414db3fa5b5bfc436e57b4368c55f"
+	"$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+	"name": "wickedengine",
+	"version-string": "xiphis",
+	"dependencies": [
+		"glog",
+		"gflags"
+	],
+	"builtin-baseline": "c2fbffc288f4bd5b37dc341528aa3801cec14dc9"
 }

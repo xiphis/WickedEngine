@@ -277,6 +277,8 @@ else ()
 endif()
 
 target_link_libraries(${TARGET_NAME} PUBLIC ${WICKEDENGINE_STATIC_LIBRARIES})
+target_link_libraries(${TARGET_NAME} PRIVATE gflags::gflags)
+target_link_libraries(${TARGET_NAME} PRIVATE glog::glog)
 
 if (PLATFORM MATCHES "SDL2")
 	target_compile_definitions(${TARGET_NAME} PUBLIC SDL2=1)
