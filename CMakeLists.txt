@@ -32,6 +32,7 @@ endif()
 
 find_package(gflags CONFIG REQUIRED)
 find_package(glog CONFIG REQUIRED)
+find_package(SDL2 CONFIG REQUIRED)
 
 add_subdirectory(WickedEngine)
 

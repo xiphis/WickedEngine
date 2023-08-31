@@ -4,7 +4,8 @@
 	"version-string": "xiphis",
 	"dependencies": [
 		"glog",
-		"gflags"
+		"gflags",
+		"sdl2"
 	],
 	"builtin-baseline": "c2fbffc288f4bd5b37dc341528aa3801cec14dc9"
 }
