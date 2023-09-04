@@ -14,6 +14,10 @@ else()
 	message(STATUS "Building WickedEngine as a static library")
 endif()
 
+find_package(gflags CONFIG REQUIRED)
+find_package(glog CONFIG REQUIRED)
+find_package(SDL2 CONFIG REQUIRED)
+
 if (WIN32)
 	# TODO: Choose whether to use SDL2 on windows as well
 	set(TARGET_NAME WickedEngine_Windows)
@@ -277,8 +281,7 @@ else ()
 endif()
 
 target_link_libraries(${TARGET_NAME} PUBLIC ${WICKEDENGINE_STATIC_LIBRARIES})
-target_link_libraries(${TARGET_NAME} PUBLIC gflags::gflags)
-target_link_libraries(${TARGET_NAME} PUBLIC glog::glog)
+target_link_libraries(${TARGET_NAME} PUBLIC glog::glog gflags::gflags)
 
 if (PLATFORM MATCHES "SDL2")
 	target_compile_definitions(${TARGET_NAME} PUBLIC SDL2=1)

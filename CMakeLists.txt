@@ -30,10 +30,6 @@ elseif(UNIX)
     set(DXC_TARGET "dxc")
 endif()
 
-find_package(gflags CONFIG REQUIRED)
-find_package(glog CONFIG REQUIRED)
-find_package(SDL2 CONFIG REQUIRED)
-
 add_subdirectory(WickedEngine)
 
 if (WICKED_EDITOR)
