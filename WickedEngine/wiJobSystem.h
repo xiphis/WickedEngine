@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <atomic>
+#include <oneapi/tbb/task_group.h>
 
 namespace wi::jobsystem
 {
@@ -24,6 +25,8 @@ namespace wi::jobsystem
 	struct context
 	{
 		std::atomic<uint32_t> counter{ 0 };
+		oneapi::tbb::task_group group;
+		~context() noexcept;
 	};
 
 	// Add a task to execute asynchronously. Any idle thread will execute this.

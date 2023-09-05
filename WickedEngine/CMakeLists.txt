@@ -17,6 +17,7 @@ endif()
 find_package(gflags CONFIG REQUIRED)
 find_package(glog CONFIG REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
+find_package(TBB CONFIG REQUIRED)
 
 if (WIN32)
 	# TODO: Choose whether to use SDL2 on windows as well
@@ -282,6 +283,7 @@ endif()
 
 target_link_libraries(${TARGET_NAME} PUBLIC ${WICKEDENGINE_STATIC_LIBRARIES})
 target_link_libraries(${TARGET_NAME} PUBLIC glog::glog gflags::gflags)
+target_link_libraries(${TARGET_NAME} PRIVATE TBB::tbb TBB::tbbmalloc TBB::tbbmalloc_proxy)
 
 if (PLATFORM MATCHES "SDL2")
 	target_compile_definitions(${TARGET_NAME} PUBLIC SDL2=1)

@@ -43,7 +43,6 @@ if (WIN32)
 	    $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
 		$<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
 	)
-	add_definitions(-D_WIN32)
 else()
 	list (APPEND SOURCE_FILES
 		main_SDL2.cpp

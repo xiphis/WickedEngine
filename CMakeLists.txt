@@ -8,7 +8,7 @@ option(WICKED_TESTS "Build WickedEngine tests" ON)
 option(WICKED_IMGUI_EXAMPLE "Build WickedEngine imgui example" ON)
 option(WICKED_LINUX_TEMPLATE "Build WickedEngine Linux template" ON)
 option(WICKED_WINDOWS_TEMPLATE "Build WickedEngine Windows template" ON)
-
+option(USE_SYSTEM_GRPC "Use system installed gRPC" ON)
 
 # Configure CMake global variables
 set(CMAKE_CXX_STANDARD 17)
@@ -29,6 +29,20 @@ elseif(UNIX)
     set(PLATFORM "SDL2")
     add_compile_definitions(SDL2=1)
     set(DXC_TARGET "dxc")
+endif()
+
+if(USE_SYSTEM_GRPC)
+    # Find system-installed gRPC
+    find_package(gRPC CONFIG REQUIRED)
+else()
+    include(FetchContent)
+    FetchContent_Declare(
+    gRPC
+    GIT_REPOSITORY https://github.com/grpc/grpc
+    GIT_TAG        1.57.0
+    )
+    set(FETCHCONTENT_QUIET OFF)
+    FetchContent_MakeAvailable(gRPC)
 endif()
 
 add_subdirectory(WickedEngine)

@@ -1,6 +1,7 @@
 if (NOT WIN32)
 	find_package(Threads REQUIRED)
 endif ()
+find_package(SDL2 CONFIG REQUIRED)
 
 set (SOURCE_FILES
 	stdafx.cpp
@@ -30,6 +31,8 @@ if (WIN32)
 	list (APPEND SOURCE_FILES
 		main_Windows.cpp
 		main_Windows.h
+		ImGui/imgui_impl_win32.cpp
+		ImGui/imgui_impl_win32.h
 		Tests.rc
 	)
 
@@ -39,6 +42,11 @@ if (WIN32)
 		WickedEngine_Windows
 	)
 	set(LIB_DXCOMPILER "dxcompiler.dll")
+
+	target_link_libraries(Example_ImGui_Docking PRIVATE
+	    $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+		$<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+	)
 else()
 	list (APPEND SOURCE_FILES
 		main_SDL2.cpp

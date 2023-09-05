@@ -359,11 +359,9 @@ namespace wi::backlog
 		const google::LogMessageTime& logmsgtime, const char* message,
 		size_t message_len)
 	{
+		LogLevel level;
 		// This is explicitly scoped for scoped_lock!
 		{
-			std::scoped_lock lock(logLock);
-
-			LogLevel level;
 			switch (severity)
 			{
 			default:
@@ -383,6 +381,8 @@ namespace wi::backlog
 			LogEntry entry;
 			entry.text = ToString(severity, full_filename, line, logmsgtime, message, message_len);
 			entry.level = level;
+
+			std::scoped_lock lock(logLock);
 			entries.push_back(entry);
 			if (entries.size() > deletefromline)
 			{
@@ -391,7 +391,10 @@ namespace wi::backlog
 			refitscroll = true;
 			// lock released on block end
 		}
-
+		if (level >= LogLevel::Error)
+		{
+			write_logfile(); // will lock mutex
+		}
 	}
 
 	inline google::LogSeverity ToSeverity(LogLevel level) {

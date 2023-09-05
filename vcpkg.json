@@ -5,7 +5,9 @@
 	"dependencies": [
 		"glog",
 		"gflags",
-		"sdl2"
+		"sdl2",
+		"grpc",
+		"tbb"
 	],
 	"builtin-baseline": "c2fbffc288f4bd5b37dc341528aa3801cec14dc9"
 }
