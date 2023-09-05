@@ -7455,7 +7455,7 @@ void RefreshEnvProbes(const Visibility& vis, CommandList cmd)
 				info += "\n\tFormat = ";
 				info += GetFormatString(desc.format);
 				info += "\n\tMemory = " + wi::helper::GetMemorySizeText(ComputeTextureMemorySizeInBytes(desc)) + "\n";
-				wi::backlog::post(info);
+				wi::backlog::post_backlog(info);
 			}
 
 			if (!envrenderingColorBuffer.IsValid())
@@ -7488,7 +7488,7 @@ void RefreshEnvProbes(const Visibility& vis, CommandList cmd)
 				info += "\n\tFormat = ";
 				info += GetFormatString(desc.format);
 				info += "\n\tMemory = " + wi::helper::GetMemorySizeText(ComputeTextureMemorySizeInBytes(desc)) + "\n";
-				wi::backlog::post(info);
+				wi::backlog::post_backlog(info);
 			}
 
 			if (!envrenderingColorBuffer_Filtered.IsValid())
@@ -7521,7 +7521,7 @@ void RefreshEnvProbes(const Visibility& vis, CommandList cmd)
 				info += "\n\tFormat = ";
 				info += GetFormatString(desc.format);
 				info += "\n\tMemory = " + wi::helper::GetMemorySizeText(ComputeTextureMemorySizeInBytes(desc)) + "\n";
-				wi::backlog::post(info);
+				wi::backlog::post_backlog(info);
 			}
 
 			if (required_sample_count > 1)
@@ -7553,7 +7553,7 @@ void RefreshEnvProbes(const Visibility& vis, CommandList cmd)
 					info += "\n\tFormat = ";
 					info += GetFormatString(desc.format);
 					info += "\n\tMemory = " + wi::helper::GetMemorySizeText(ComputeTextureMemorySizeInBytes(desc)) + "\n";
-					wi::backlog::post(info);
+					wi::backlog::post_backlog(info);
 				}
 			}
 		}
