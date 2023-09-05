@@ -7,6 +7,7 @@ option(WICKED_EDITOR "Build WickedEngine editor" ON)
 option(WICKED_TESTS "Build WickedEngine tests" ON)
 option(WICKED_IMGUI_EXAMPLE "Build WickedEngine imgui example" ON)
 option(WICKED_LINUX_TEMPLATE "Build WickedEngine Linux template" ON)
+option(WICKED_WINDOWS_TEMPLATE "Build WickedEngine Windows template" ON)
 
 
 # Configure CMake global variables
@@ -47,4 +48,8 @@ endif()
 
 if (WICKED_LINUX_TEMPLATE)
     add_subdirectory(Template_Linux)
+endif()
+
+if (WICKED_WINDOWS_TEMPLATE)
+    add_subdirectory(Template_Windows)
 endif()

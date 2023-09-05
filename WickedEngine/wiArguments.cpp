@@ -3,6 +3,7 @@
 #include "wiUnorderedSet.h"
 
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 
 #include <sstream>
 #include <iterator>
@@ -37,6 +38,7 @@ namespace wi::arguments
 		LocalFree(argcw);
 
 		gflags::ParseCommandLineFlags(&argc, &argv, true);
+		google::InitGoogleLogging(argv[0]);
 
 		for (int i = 1; i < argc; i++)
 		{
@@ -60,6 +62,7 @@ namespace wi::arguments
 	void Parse(int argc, char *argv[])
     {
 		gflags::ParseCommandLineFlags(&argc, &argv, true);
+		google::InitGoogleLogging(argv[0]);
 
 		for (int i = 1; i < argc; i++)
 		{
