@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 option(WICKED_DYNAMIC_LIBRARY "Build WickedEngine as a dynamic library" OFF)
 
@@ -8,7 +9,6 @@ option(WICKED_TESTS "Build WickedEngine tests" ON)
 option(WICKED_IMGUI_EXAMPLE "Build WickedEngine imgui example" ON)
 option(WICKED_LINUX_TEMPLATE "Build WickedEngine Linux template" ON)
 option(WICKED_WINDOWS_TEMPLATE "Build WickedEngine Windows template" ON)
-option(USE_SYSTEM_GRPC "Use system installed gRPC" ON)
 
 # Configure CMake global variables
 set(CMAKE_CXX_STANDARD 17)
@@ -31,21 +31,9 @@ elseif(UNIX)
     set(DXC_TARGET "dxc")
 endif()
 
-if(USE_SYSTEM_GRPC)
-    # Find system-installed gRPC
-    find_package(gRPC CONFIG REQUIRED)
-else()
-    include(FetchContent)
-    FetchContent_Declare(
-    gRPC
-    GIT_REPOSITORY https://github.com/grpc/grpc
-    GIT_TAG        1.57.0
-    )
-    set(FETCHCONTENT_QUIET OFF)
-    FetchContent_MakeAvailable(gRPC)
-endif()
-
 add_subdirectory(WickedEngine)
+
+add_subdirectory(gamerpc)
 
 if (WICKED_EDITOR)
     add_subdirectory(Editor)
