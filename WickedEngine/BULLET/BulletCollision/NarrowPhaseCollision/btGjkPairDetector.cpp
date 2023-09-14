@@ -18,6 +18,10 @@ subject to the following restrictions:
 #include "BulletCollision/NarrowPhaseCollision/btSimplexSolverInterface.h"
 #include "BulletCollision/NarrowPhaseCollision/btConvexPenetrationDepthSolver.h"
 
+#ifndef GLOG_NO_ABBREVIATED_SEVERITIES
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#endif
+#include <glog/logging.h>
 
 
 #if defined(DEBUG) || defined (_DEBUG)
@@ -276,14 +280,10 @@ void btGjkPairDetector::getClosestPointsNonVirtual(const ClosestPointInput& inpu
               {   
                       #if defined(DEBUG) || defined (_DEBUG) || defined (DEBUG_SPU_COLLISION_DETECTION)
 
-                              printf("btGjkPairDetector maxIter exceeded:%i\n",m_curIter);   
-                              printf("sepAxis=(%f,%f,%f), squaredDistance = %f, shapeTypeA=%i,shapeTypeB=%i\n",   
-                              m_cachedSeparatingAxis.getX(),   
-                              m_cachedSeparatingAxis.getY(),   
-                              m_cachedSeparatingAxis.getZ(),   
-                              squaredDistance,   
-                              m_minkowskiA->getShapeType(),   
-                              m_minkowskiB->getShapeType());   
+							LOG(WARNING)
+								<< "btGjkPairDetector maxIter exceeded:" << m_curIter << "\n"
+								<< "sepAxis=(" << m_cachedSeparatingAxis.getX() << "," << m_cachedSeparatingAxis.getY() << "," << m_cachedSeparatingAxis.getZ()
+								<< "), squaredDistance = " << squaredDistance << ", shapeTypeA=" << m_minkowskiA->getShapeType() << ",shapeTypeB=" << m_minkowskiB->getShapeType();
 
                       #endif   
                       break;   

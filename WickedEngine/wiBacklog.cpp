@@ -53,9 +53,7 @@ namespace wi::backlog
 	bool blockLuaExec = false;
 	LogLevel logLevel = LogLevel::Default;
 
-#ifdef WIN32
     static oneapi::tbb::enumerable_thread_specific<std::string> dbug_buffer;
-#endif
 
 	std::string getTextWithoutLock()
 	{
@@ -388,7 +386,9 @@ namespace wi::backlog
 			entry.level = level;
 
 #ifdef WIN32
-			OutputDebugStringA(dbug_buffer.local().assign(entry.text).append("\n").c_str());
+			if (DCHECK_IS_ON()) {
+				OutputDebugStringA(dbug_buffer.local().assign(entry.text).append("\n").c_str());
+			}
 #endif
 			std::scoped_lock lock(logLock);
 			entries.push_back(entry);
@@ -419,6 +419,13 @@ namespace wi::backlog
 		case LogLevel::Fatal:
 			return google::GLOG_FATAL;
 		}
+	}
+
+	std::string& postf_buffer(const char* file, int line, int length) {
+		assert (length >= 0);
+		std::string& buffer = dbug_buffer.local();
+		buffer.resize(length);
+		return buffer;
 	}
 
 	void post(const char* file, int line, const std::string& input, LogLevel level)

@@ -14,6 +14,10 @@ namespace wi::arguments
 {
 	wi::unordered_set<std::string> params;
 
+	void InstallFailureSignalHandler() {
+		google::InstallFailureSignalHandler();
+	}
+
 	void Parse(const wchar_t* args)
 	{
 #ifdef _WIN32
@@ -57,6 +61,7 @@ namespace wi::arguments
 			std::istream_iterator<std::string>{}
 		};
 #endif
+		InstallFailureSignalHandler();
 	}
 
 	void Parse(int argc, char *argv[])
@@ -68,6 +73,7 @@ namespace wi::arguments
 		{
 			params.insert(std::string(argv[i]));
 		}
+		InstallFailureSignalHandler();
     }
 
 	bool HasArgument(const std::string& value)

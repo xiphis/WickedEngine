@@ -5407,7 +5407,9 @@ void DrawShadowmaps(
 
 				SHCAM shcam;
 				CreateSpotLightShadowCam(light, shcam);
-				if (!cam_frustum.Intersects(shcam.boundingfrustum))
+				if (std::isnan(cam_frustum.Orientation.w) || std::isnan(cam_frustum.Orientation.x)
+						|| std::isnan(cam_frustum.Orientation.y) || std::isnan(cam_frustum.Orientation.z)
+						|| !cam_frustum.Intersects(shcam.boundingfrustum))
 					break;
 
 				renderQueue.init();
@@ -5516,8 +5518,10 @@ void DrawShadowmaps(
 
 				for (uint32_t shcam = 0; shcam < arraysize(cameras); ++shcam)
 				{
+					bool cam_invalid = std::isnan(cam_frustum.Orientation.w) || std::isnan(cam_frustum.Orientation.x)
+						|| std::isnan(cam_frustum.Orientation.y) || std::isnan(cam_frustum.Orientation.z);
 					// Check if cubemap face frustum is visible from main camera, otherwise, it will be skipped:
-					if (cam_frustum.Intersects(cameras[shcam].boundingfrustum))
+					if (!cam_invalid && cam_frustum.Intersects(cameras[shcam].boundingfrustum))
 					{
 						XMStoreFloat4x4(&cb.cameras[camera_count].view_projection, cameras[shcam].view_projection);
 						// We no longer have a straight mapping from camera to viewport:

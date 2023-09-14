@@ -59,6 +59,7 @@ namespace wi::jobsystem
 		if (IsBusy(*this)) {
 			wi::backlog::post_backlog("wi::jobsystem::context destruction of busy context", wi::backlog::LogLevel::Fatal);
 		}
+		Wait(*this);
 	}
 
 	void Initialize(uint32_t maxThreadCount)
@@ -180,9 +181,7 @@ namespace wi::jobsystem
 
 	void Wait(const context& ctx)
 	{
-		if (IsBusy(ctx))
-		{
-			const_cast<oneapi::tbb::task_group&>(ctx.group).wait();
-		}
+		//if (IsBusy(ctx))
+		const_cast<oneapi::tbb::task_group&>(ctx.group).wait();
 	}
 }
