@@ -18,7 +18,7 @@ set (SOURCE_FILES
 
 set(LIB_DXCOMPILER "libdxcompiler.so")
 
-add_executable(Template_Windows ${SOURCE_FILES})
+add_executable(Template_Windows WIN32 ${SOURCE_FILES})
 
 target_link_libraries(Template_Windows PUBLIC
     # These are cmake generator expressions. They seem more dauting than they are

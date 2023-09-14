@@ -16,6 +16,7 @@
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #endif
 #include <glog/logging.h>
+#include <oneapi/tbb/enumerable_thread_specific.h>
 
 #include <mutex>
 #include <deque>
@@ -51,6 +52,10 @@ namespace wi::backlog
 	bool locked = false;
 	bool blockLuaExec = false;
 	LogLevel logLevel = LogLevel::Default;
+
+#ifdef WIN32
+    static oneapi::tbb::enumerable_thread_specific<std::string> dbug_buffer;
+#endif
 
 	std::string getTextWithoutLock()
 	{
@@ -382,6 +387,9 @@ namespace wi::backlog
 			entry.text = ToString(severity, full_filename, line, logmsgtime, message, message_len);
 			entry.level = level;
 
+#ifdef WIN32
+			OutputDebugStringA(dbug_buffer.local().assign(entry.text).append("\n").c_str());
+#endif
 			std::scoped_lock lock(logLock);
 			entries.push_back(entry);
 			if (entries.size() > deletefromline)

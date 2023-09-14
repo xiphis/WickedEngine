@@ -461,3 +461,6 @@ set_target_properties(Bullet PROPERTIES
 	FOLDER "ThirdParty"
 	POSITION_INDEPENDENT_CODE ${WICKED_DYNAMIC_LIBRARY}
 )
+
+target_link_libraries(Bullet PRIVATE TBB::tbb TBB::tbbmalloc TBB::tbbmalloc_proxy)
+

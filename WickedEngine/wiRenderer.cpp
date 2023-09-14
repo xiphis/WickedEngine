@@ -35,6 +35,8 @@
 #include <atomic>
 #include <mutex>
 
+#include <glog/logging.h>
+
 using namespace wi::primitive;
 using namespace wi::graphics;
 using namespace wi::enums;
@@ -702,12 +704,12 @@ bool LoadShader(
 			{
 				wi::backlog::post_backlog(output.error_message, wi::backlog::LogLevel::Warning);
 			}
-			wi::backlog::post_backlog("shader compiled: " + shaderbinaryfilename);
+			LOG(INFO) << "shader compiled: " << shaderbinaryfilename;
 			return device->CreateShader(stage, output.shaderdata, output.shadersize, &shader);
 		}
 		else
 		{
-			wi::backlog::post_backlog("shader compile FAILED: " + shaderbinaryfilename + "\n" + output.error_message, wi::backlog::LogLevel::Error);
+			LOG(ERROR) << "shader compile FAILED: " << shaderbinaryfilename << "\n" << output.error_message;
 			SHADER_ERRORS.fetch_add(1);
 		}
 	}
@@ -715,6 +717,7 @@ bool LoadShader(
 	if (device != nullptr)
 	{
 		wi::vector<uint8_t> buffer;
+		LOG(INFO) << "shader loading: " << shaderbinaryfilename;
 		if (wi::helper::FileRead(shaderbinaryfilename, buffer))
 		{
 			bool success = device->CreateShader(stage, buffer.data(), buffer.size(), &shader);
@@ -729,6 +732,7 @@ bool LoadShader(
 			SHADER_MISSING.fetch_add(1);
 		}
 	}
+	DLOG(INFO) << "shader skipped: " << shaderbinaryfilename;
 
 	return false;
 }

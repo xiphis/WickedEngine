@@ -21,6 +21,7 @@ subject to the following restrictions:
 #include "BulletCollision/CollisionShapes/btCapsuleShape.h"
 #include "BulletSoftBody/btSoftBody.h"
 
+#include <oneapi/tbb.h>
 
 btDefaultSoftBodySolver::btDefaultSoftBodySolver()
 {
@@ -138,14 +139,17 @@ void btDefaultSoftBodySolver::processCollision( btSoftBody *softBody, const btCo
 
 void btDefaultSoftBodySolver::predictMotion( float timeStep )
 {
-	for ( int i=0; i < m_softBodySet.size(); ++i)
-	{
-		btSoftBody*	psb = m_softBodySet[i];
-
-		if (psb->isActive())
+	using namespace oneapi::tbb;
+	parallel_for(blocked_range<int>(0, m_softBodySet.size()), [&] (const blocked_range<int>& r) {
+		for (int i=r.begin(); i != r.end(); ++i)
 		{
-			psb->predictMotion(timeStep);		
+			btSoftBody*	psb = m_softBodySet[i];
+
+			if (psb->isActive())
+			{
+				psb->predictMotion(timeStep);		
+			}
 		}
-	}
+	});
 }
 

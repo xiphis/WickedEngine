@@ -19,6 +19,9 @@ subject to the following restrictions:
 #include "btSoftBodyData.h"
 #include "LinearMath/btSerializer.h"
 
+#include <oneapi/tbb.h>
+using namespace oneapi::tbb;
+
 
 //
 btSoftBody::btSoftBody(btSoftBodyWorldInfo*	worldInfo,int node_count,  const btVector3* x,  const btScalar* m)
@@ -501,7 +504,7 @@ void			btSoftBody::addAeroForceToNode(const btVector3& windVelocity,int nodeInde
 					fDrag = 0.5f * kDG * medium.m_density * rel_v2 * tri_area * n_dot_v * (-rel_v_nrm);
 							
 					// Check angle of attack
-					// cos(10º) = 0.98480
+					// cos(10ï¿½) = 0.98480
 					if ( 0 < n_dot_v && n_dot_v < 0.98480f)
 						fLift = 0.5f * kLF * medium.m_density * rel_v_len * tri_area * btSqrt(1.0f-n_dot_v*n_dot_v) * (nrm.cross(rel_v_nrm).cross(rel_v_nrm));
 
@@ -587,7 +590,7 @@ void			btSoftBody::addAeroForceToFace(const btVector3& windVelocity,int faceInde
 				fDrag = 0.5f * kDG * medium.m_density * rel_v2 * tri_area * n_dot_v * (-rel_v_nrm);
 
 				// Check angle of attack
-				// cos(10º) = 0.98480
+				// cos(10ï¿½) = 0.98480
 				if ( 0 < n_dot_v && n_dot_v < 0.98480f)
 					fLift = 0.5f * kLF * medium.m_density * rel_v_len * tri_area * btSqrt(1.0f-n_dot_v*n_dot_v) * (nrm.cross(rel_v_nrm).cross(rel_v_nrm));
 
@@ -684,48 +687,71 @@ btScalar		btSoftBody::getMass(int node) const
 //
 btScalar		btSoftBody::getTotalMass() const
 {
-	btScalar	mass=0;
-	for(int i=0;i<m_nodes.size();++i)
-	{
-		mass+=getMass(i);
-	}
-	return(mass);
+	class SumMass {
+		const btSoftBody& self;
+	public:
+		btScalar myMass;
+		void operator()(const blocked_range<int>& r) {
+			btScalar sum = myMass;
+			int end = r.end();
+			for (int i=r.begin(); i!=end; ++i) {
+				sum += self.getMass(i);
+			}
+			myMass = sum;
+		}
+		SumMass(SumMass& x, split) : self(x.self), myMass(0) {}
+
+		void join(const SumMass& y) {
+			myMass += y.myMass;
+		}
+
+		SumMass(const btSoftBody& body) : self(body), myMass(0) {}
+	} sum(*this);
+	parallel_reduce(blocked_range<int>(0, m_nodes.size()), sum);
+	return(sum.myMass);
 }
 
 //
 void			btSoftBody::setTotalMass(btScalar mass,bool fromfaces)
 {
-	int i;
-
 	if(fromfaces)
 	{
-
-		for(i=0;i<m_nodes.size();++i)
-		{
-			m_nodes[i].m_im=0;
-		}
-		for(i=0;i<m_faces.size();++i)
-		{
-			const Face&		f=m_faces[i];
-			const btScalar	twicearea=AreaOf(	f.m_n[0]->m_x,
-				f.m_n[1]->m_x,
-				f.m_n[2]->m_x);
-			for(int j=0;j<3;++j)
-			{
-				f.m_n[j]->m_im+=twicearea;
+		parallel_for(blocked_range<int>(0, m_nodes.size()), [&] (const blocked_range<int>& r) {
+			for (int i=r.begin(); i!= r.end(); ++i) {
+				m_nodes[i].m_im=0;
 			}
-		}
-		for( i=0;i<m_nodes.size();++i)
-		{
-			m_nodes[i].m_im=1/m_nodes[i].m_im;
-		}
+		});
+
+		parallel_for(blocked_range<int>(0, m_faces.size()), [&] (const blocked_range<int>& r) {
+			for(int i=r.begin();i!=r.end();++i)
+			{
+				const Face&		f=m_faces[i];
+				const btScalar	twicearea=AreaOf(	f.m_n[0]->m_x,
+					f.m_n[1]->m_x,
+					f.m_n[2]->m_x);
+				for(int j=0;j<3;++j)
+				{
+					f.m_n[j]->m_im+=twicearea;
+				}
+			}
+		});
+
+		parallel_for(blocked_range<int>(0, m_nodes.size()), [&] (const blocked_range<int>& r) {
+			for(int i=r.begin();i!=r.end();++i)
+			{
+				m_nodes[i].m_im=1/m_nodes[i].m_im;
+			}
+		});
 	}
 	const btScalar	tm=getTotalMass();
 	const btScalar	itm=1/tm;
-	for( i=0;i<m_nodes.size();++i)
-	{
-		m_nodes[i].m_im/=itm*mass;
-	}
+	const btScalar  ratio=1/(itm*mass);
+	parallel_for(blocked_range<int>(0, m_nodes.size()), [&] (const blocked_range<int>& r) {
+		for(int i=r.begin();i!=r.end();++i)
+		{
+			m_nodes[i].m_im*=ratio;
+		}
+	});
 	m_bUpdateRtCst=true;
 }
 
@@ -786,16 +812,18 @@ void			btSoftBody::transform(const btTransform& trs)
 	const btScalar	margin=getCollisionShape()->getMargin();
 	ATTRIBUTE_ALIGNED16(btDbvtVolume)	vol;
 	
-	for(int i=0,ni=m_nodes.size();i<ni;++i)
-	{
-		Node&	n=m_nodes[i];
-		n.m_x=trs*n.m_x;
-		n.m_q=trs*n.m_q;
-		n.m_n=trs.getBasis()*n.m_n;
-		vol = btDbvtVolume::FromCR(n.m_x,margin);
-		
-		m_ndbvt.update(n.m_leaf,vol);
-	}
+	parallel_for(blocked_range<int>(0, m_nodes.size()), [&] (const blocked_range<int>& r) {
+		for(int i=r.begin(),ni=r.end();i!=ni;++i)
+		{
+			Node&	n=m_nodes[i];
+			n.m_x=trs*n.m_x;
+			n.m_q=trs*n.m_q;
+			n.m_n=trs.getBasis()*n.m_n;
+			vol = btDbvtVolume::FromCR(n.m_x,margin);
+			
+			m_ndbvt.update(n.m_leaf,vol);
+		}
+	});
 	updateNormals();
 	updateBounds();
 	updateConstants();
@@ -827,14 +855,16 @@ void			btSoftBody::scale(const btVector3& scl)
 	const btScalar	margin=getCollisionShape()->getMargin();
 	ATTRIBUTE_ALIGNED16(btDbvtVolume)	vol;
 	
-	for(int i=0,ni=m_nodes.size();i<ni;++i)
-	{
-		Node&	n=m_nodes[i];
-		n.m_x*=scl;
-		n.m_q*=scl;
-		vol = btDbvtVolume::FromCR(n.m_x,margin);
-		m_ndbvt.update(n.m_leaf,vol);
-	}
+	parallel_for(blocked_range<int>(0, m_nodes.size()), [&] (const blocked_range<int>& r) {
+		for(int i=r.begin(),ni=r.end();i!=ni;++i)
+		{
+			Node&	n=m_nodes[i];
+			n.m_x*=scl;
+			n.m_q*=scl;
+			vol = btDbvtVolume::FromCR(n.m_x,margin);
+			m_ndbvt.update(n.m_leaf,vol);
+		}
+	});
 	updateNormals();
 	updateBounds();
 	updateConstants();
@@ -1037,8 +1067,6 @@ struct NodeLinks
 //
 int				btSoftBody::generateBendingConstraints(int distance,Material* mat)
 {
-	int i,j;
-
 	if(distance>1)
 	{
 		/* Build graph	*/ 
@@ -1048,27 +1076,31 @@ int				btSoftBody::generateBendingConstraints(int distance,Material* mat)
 		
 
 #define IDX(_x_,_y_)	((_y_)*n+(_x_))
-		for(j=0;j<n;++j)
-		{
-			for(i=0;i<n;++i)
+		parallel_for(blocked_range2d<int, int>(0, n, 0, n), [&] (const blocked_range2d<int, int>& r) {
+			for(int x=r.cols().begin(), ex=r.cols().end(); x!=ex; ++x)
 			{
-				if(i!=j)
+				for(int y=r.rows().begin(), ey=r.rows().end();y!=ey; ++y)
 				{
-					adj[IDX(i,j)]=adj[IDX(j,i)]=inf;
-				}
-				else
-				{
-					adj[IDX(i,j)]=adj[IDX(j,i)]=0;
+					if(x!=y)
+					{
+						adj[IDX(x,y)]=adj[IDX(y,x)]=inf;
+					}
+					else
+					{
+						adj[IDX(x,y)]=adj[IDX(y,x)]=0;
+					}
 				}
 			}
-		}
-		for( i=0;i<m_links.size();++i)
-		{
-			const int	ia=(int)(m_links[i].m_n[0]-&m_nodes[0]);
-			const int	ib=(int)(m_links[i].m_n[1]-&m_nodes[0]);
-			adj[IDX(ia,ib)]=1;
-			adj[IDX(ib,ia)]=1;
-		}
+		});
+		parallel_for(blocked_range<int>(0, m_links.size()), [&] (const blocked_range<int>& r) {
+			for(int i=r.begin(), ei=r.end();i!=ei;++i)
+			{
+				const int	ia=(int)(m_links[i].m_n[0]-&m_nodes[0]);
+				const int	ib=(int)(m_links[i].m_n[1]-&m_nodes[0]);
+				adj[IDX(ia,ib)]=1;
+				adj[IDX(ib,ia)]=1;
+			}
+		});
 
 
 		//special optimized case for distance == 2
@@ -1081,7 +1113,7 @@ int				btSoftBody::generateBendingConstraints(int distance,Material* mat)
 			/* Build node links */
 			nodeLinks.resize(m_nodes.size());
 
-			for( i=0;i<m_links.size();++i)
+			for(int i=0;i<m_links.size();++i)
 			{
 				const int	ia=(int)(m_links[i].m_n[0]-&m_nodes[0]);
 				const int	ib=(int)(m_links[i].m_n[1]-&m_nodes[0]);
@@ -1117,28 +1149,29 @@ int				btSoftBody::generateBendingConstraints(int distance,Material* mat)
 		} else
 		{
 			///generic Floyd's algorithm
-			for(int k=0;k<n;++k)
-			{
-				for(j=0;j<n;++j)
-				{
-					for(i=j+1;i<n;++i)
-					{
-						const unsigned	sum=adj[IDX(i,k)]+adj[IDX(k,j)];
-						if(adj[IDX(i,j)]>sum)
-						{
-							adj[IDX(i,j)]=adj[IDX(j,i)]=sum;
-						}
+			parallel_for(blocked_range2d<int, int>(0, n, 0, n), [&] (const blocked_range2d<int, int>& r) {
+				for(int k=r.cols().begin(),ek=r.cols().end(); k!=ek; ++k) {
+					for(int j=r.rows().begin(),ej=r.rows().end(); j!=ej; ++j) {
+						parallel_for(blocked_range(j+1, n), [&] (const blocked_range<int>& s) {
+							for (int i=s.begin(),ei=s.end(); i!=ei; ++i) {
+								const unsigned	sum=adj[IDX(i,k)]+adj[IDX(k,j)];
+								if(adj[IDX(i,j)]>sum)
+								{
+									adj[IDX(i,j)]=adj[IDX(j,i)]=sum;
+								}
+							}
+						});
 					}
 				}
-			}
+			});
 		}
 
 
 		/* Build links	*/ 
 		int	nlinks=0;
-		for(j=0;j<n;++j)
+		for(int j=0;j<n;++j)
 		{
-			for(i=j+1;i<n;++i)
+			for(int i=j+1;i<n;++i)
 			{
 				if(adj[IDX(i,j)]==(unsigned)distance)
 				{

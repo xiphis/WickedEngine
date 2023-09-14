@@ -33,7 +33,7 @@ endif()
 
 add_subdirectory(WickedEngine)
 
-add_subdirectory(gamerpc)
+#add_subdirectory(gamerpc)
 
 if (WICKED_EDITOR)
     add_subdirectory(Editor)
